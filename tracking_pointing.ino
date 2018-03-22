@@ -1,11 +1,4 @@
 #include <Servo.h>
-
-// MISEA-UC3M 2014-15
-// Base program
-// Proyectos Experimentales I
-// Proyectos Experimentales II
-// Copy Right Universidad Carlos III de Madrid
-
 #include <stdint.h>              // standard library for integers (used in the next libraries)
 #include "driverlib\systick.h"   // standard library for the SysTick (header)
 #include "driverlib\systick.c"   // standard library for the SysTick (functions)
@@ -58,176 +51,160 @@ int flag_out=0;
 int initialization=0;
 void setup()
 {
-  SysTickDisable();                      // Disables SysTick during the configuration
-  SysTickPeriodSet(TickerPeriod);        // Define the period of the counter. When it reaches 0, it activates the interrupt
-  SysTickIntRegister(&Ticker);   // The interrupt is associated to the SysTick ISR
-  SysTickIntEnable();                    // The SysTick interrupt is enabled
-  SysTickEnable();                       // The SysTick is enabled, after having been configured
-  IntMasterEnable();                     // All interrupts are enabled
-  fin_pwmX=PWM_LOW+destinoX;
-  fin_pwmY=PWM_LOW+destinoY;
+	SysTickDisable();                      // Disables SysTick during the configuration
+  	SysTickPeriodSet(TickerPeriod);        // Define the period of the counter. When it reaches 0, it activates the interrupt
+	SysTickIntRegister(&Ticker);   // The interrupt is associated to the SysTick ISR
+	SysTickIntEnable();                    // The SysTick interrupt is enabled
+	SysTickEnable();                       // The SysTick is enabled, after having been configured
+	IntMasterEnable();                     // All interrupts are enabled
+	fin_pwmX=PWM_LOW+destinoX;
+	fin_pwmY=PWM_LOW+destinoY;
 
-//Inicializamos el Serial y los puertos de salida para los servos y los de entrada para el detector de cuadrante
-Serial.begin(9600);
-pinMode(PC_4,OUTPUT);
-pinMode(PC_5,OUTPUT);
-pinMode(PE_0,INPUT);
-pinMode(PE_1,INPUT);
-pinMode(PE_2,INPUT);
-pinMode(PE_3,INPUT);
+	//Inicializamos el Serial y los puertos de salida para los servos y los de entrada para el detector de cuadrante
+	Serial.begin(9600);
+	pinMode(PC_4,OUTPUT);
+	pinMode(PC_5,OUTPUT);
+	pinMode(PE_0,INPUT);
+	pinMode(PE_1,INPUT);
+	pinMode(PE_2,INPUT);
+	pinMode(PE_3,INPUT);
 }
 
 void loop()
 {
  
-   //Lectura y normalizacion por eje del detector de cuadrante
-       c1=(analogRead(PE_1));
-       c2=(analogRead(PE_0));   
-       c3=(analogRead(PE_3));  
-       c4=(analogRead(PE_2));
+	//Lectura y normalizacion por eje del detector de cuadrante
+	c1=(analogRead(PE_1));
+	c2=(analogRead(PE_0));   
+	c3=(analogRead(PE_3));  
+	c4=(analogRead(PE_2));
        
-       c1_normY=c1*1.254;
-       c2_normY=c2*1.808;
-       c3_normY=c3;
-       c4_normY=c4*1.084;    
-       
-       c1_norm=c1;
-       c2_norm=c2*1.169;
-       c3_norm=c3*1.306;
-       c4_norm=c4*1.359;
-       //Comprobamos si hemos perdido el tracking, en cuyo caso arrancamos el controlador PI
-       if((c1<75)&&(c2<75)&&(c3<75)&&(c4<75) && (flag_out==0)){
-         flag_out=1;               
-       }else{
-         flag_out=0;
-  
-         x_outz2=x_outz1;
-		 y_outz2=y_outz1;
-		   
-		 x_outz1=x;
-		 y_outz1=y;
-		   
-       }
-	   // Composicion de coordenadas
-       x=((c1_norm+c4_norm)-(c2_norm+c3_norm))/(c1_norm+c2_norm+c3_norm+c4_norm);
-       y=((c1_normY+c2_normY)-(c3_normY+c4_normY))/(c1_normY+c2_normY+c3_normY+c4_normY);
+	c1_normY=c1*1.254;
+	c2_normY=c2*1.808;
+	c3_normY=c3;
+	c4_normY=c4*1.084;    
+
+	c1_norm=c1;
+	c2_norm=c2*1.169;
+	c3_norm=c3*1.306;
+	c4_norm=c4*1.359;
+	
+	//Comprobamos si hemos perdido el tracking, en cuyo caso arrancamos el controlador PI
+	if((c1<75)&&(c2<75)&&(c3<75)&&(c4<75) && (flag_out==0)){
+	 	flag_out=1;               
+	}else{
+		flag_out=0;
+
+		x_outz2=x_outz1;
+		y_outz2=y_outz1;
+
+		x_outz1=x;
+		y_outz1=y;
+
+	}
+	// Composicion de coordenadas
+	x=((c1_norm+c4_norm)-(c2_norm+c3_norm))/(c1_norm+c2_norm+c3_norm+c4_norm);
+	y=((c1_normY+c2_normY)-(c3_normY+c4_normY))/(c1_normY+c2_normY+c3_normY+c4_normY);
        
 }
 
 
 void Ticker()                          
 {
-        //Monitorizacion y generacion de flancos en la señal "PWM" mediante escrituras digitales HIGH y LOW. 
-  
+	//Monitorizacion y generacion de flancos en la señal "PWM" mediante escrituras digitales HIGH y LOW. 
+	if(muestreoX==0){
+		digitalWrite(PC_4, HIGH);
 
-    if(muestreoX==0){
-      digitalWrite(PC_4, HIGH);
-   
-       //Si X es mayor que 0.5 --> servo 1 mover izquierda
-       //Si X es menor que -0.5 --> servo 1 mover derecha
-       //Si Y es mayor que 0.5 --> servo 2 mover abajo
-       //Si Y es menor que -0.5 --> servo 2 mover arriba
+		//Si X es mayor que 0.5 --> servo 1 mover izquierda
+		//Si X es menor que -0.5 --> servo 1 mover derecha
+		//Si Y es mayor que 0.5 --> servo 2 mover abajo
+		//Si Y es menor que -0.5 --> servo 2 mover arriba
 
-      muestreoX++;
-    }else if (muestreoX==destinoX){  
-      digitalWrite(PC_4, LOW);
-      muestreoX++;
-    }else if (muestreoX==fin_pwmX){   
-         if(flag_out==0){
-            if(x>0.5){
-              muestreoX=0;
-              destinoX++;
-              fin_pwmX=PWM_LOW+destinoX;
+     	muestreoX++;
+	}else if (muestreoX==destinoX){  
+		digitalWrite(PC_4, LOW);
+	  	muestreoX++;
+	}else if (muestreoX==fin_pwmX){   
+		if(flag_out==0){
+			if(x>0.5){
+		  		muestreoX=0;
+	  			destinoX++;
+              	fin_pwmX=PWM_LOW+destinoX;
             }else if (x<(-0.5)){
-              muestreoX=0;
-              destinoX--;
-              fin_pwmX=PWM_LOW+destinoX;
+			 	muestreoX=0;
+		  		destinoX--;
+		  		fin_pwmX=PWM_LOW+destinoX;
             }else{
-              muestreoX=0;
-              fin_pwmX=PWM_LOW+destinoX;
+              	muestreoX=0;
+              	fin_pwmX=PWM_LOW+destinoX;
             }
             
-         }else if (flag_out==1){
-			 //En caso de perder el tracking, mediante el controlador integral se estima la trayectoria del detector de cuadrante para volver a encontrarlo. Si no es encontrado en un ciclo de "PWM", entra a funcionar el mecanismo de pointing.
-           if(x_outz2>(x_outz1+0.05))
-           {
-             muestreoX=0;
-             destinoX--;
-             fin_pwmX=PWM_LOW+destinoX;
-             flag_out=2;
-           }
-           else if(x_outz2<(x_outz1-0.05))
-           {
-             muestreoX=0;
-             destinoX++;
-             fin_pwmX=PWM_LOW+destinoX;
-              flag_out=2;
+		}else if (flag_out==1){
+		 	//En caso de perder el tracking, mediante el controlador integral se estima la trayectoria del detector de cuadrante para volver a encontrarlo. Si no es encontrado en un ciclo de "PWM", entra a funcionar el mecanismo de pointing.
+			if(x_outz2>(x_outz1+0.05)){
+				muestreoX=0;
+             	destinoX--;
+             	fin_pwmX=PWM_LOW+destinoX;
+             	flag_out=2;
+			}else if(x_outz2<(x_outz1-0.05)){
+				muestreoX=0;
+             	destinoX++;
+             	fin_pwmX=PWM_LOW+destinoX;
+              	flag_out=2;
            }else{
-            muestreoX=0;
-            fin_pwmX=PWM_LOW+destinoX;
-             flag_out=2;
-            
-           }
-         }
-    }else{
-      muestreoX++;
-    }
+            	muestreoX=0;
+            	fin_pwmX=PWM_LOW+destinoX;
+             	flag_out=2;
+	  		}
+	 	}
+	}else{
+  		muestreoX++;
+	}
     
-    if(muestreoY==0){
-      digitalWrite(PC_5, HIGH);
+	if(muestreoY==0){
+		digitalWrite(PC_5, HIGH);
 
-    
-       //Si X es mayor que 0.5 --> servo 1 mover izquierda
-       //Si X es menor que -0.5 --> servo 1 mover derecha
-       //Si Y es mayor que 0.5 --> servo 2 mover abajo
-       //Si Y es menor que -0.5 --> servo 2 mover arriba
+		//Si X es mayor que 0.5 --> servo 1 mover izquierda
+       	//Si X es menor que -0.5 --> servo 1 mover derecha
+		//Si Y es mayor que 0.5 --> servo 2 mover abajo
+       	//Si Y es menor que -0.5 --> servo 2 mover arriba
 
-      muestreoY++;
-    }else if (muestreoY==destinoY){  
-      digitalWrite(PC_5, LOW);
-      muestreoY++;
+		muestreoY++;
+	}else if (muestreoY==destinoY){  
+      	digitalWrite(PC_5, LOW);
+      	muestreoY++;
     }else if (muestreoY==fin_pwmY){
-     
-         if(flag_out==0){
-            if(y>0.5){
-              muestreoY=0;
-              destinoY++;
-              fin_pwmY=PWM_LOW+destinoY;
+	  	if(flag_out==0){
+			if(y>0.5){
+		  		muestreoY=0;
+              	destinoY++;
+				fin_pwmY=PWM_LOW+destinoY;
             }else if (y<(-0.5)){
-              muestreoY=0;
-              destinoY--;
-              fin_pwmY=PWM_LOW+destinoY;
+		  		muestreoY=0;
+              	destinoY--;
+              	fin_pwmY=PWM_LOW+destinoY;
             }else{
-              muestreoY=0;
-              fin_pwmY=PWM_LOW+destinoY;
+              	muestreoY=0;
+              	fin_pwmY=PWM_LOW+destinoY;
             }
-         }else{
-			  //En caso de perder el tracking, mediante el controlador integral se estima la trayectoria del detector de cuadrante para volver a encontrarlo. Si no es encontrado en un ciclo de "PWM", entra a funcionar el mecanismo de pointing.
-            if(y_outz2>(y_outz1+0.05))
-           {
-             muestreoY=0;
-             destinoY--;
-             fin_pwmY=PWM_LOW+destinoY;
-           }
-           else if(y_outz2<(y_outz1-0.05))
-           {
-             muestreoY=0;
-             destinoY++;
-             fin_pwmY=PWM_LOW+destinoY;
-           }
-           else
-           {
-            muestreoY=0;
-            fin_pwmY=PWM_LOW+destinoY;
-           }
-         }
-    }else{
-      muestreoY++;
-    }
-  
-
-  
-  
+	 	}else{
+			//En caso de perder el tracking, mediante el controlador integral se estima la trayectoria del detector de cuadrante para volver a encontrarlo. Si no es encontrado en un ciclo de "PWM", entra a funcionar el mecanismo de pointing.
+			if(y_outz2>(y_outz1+0.05)){
+		  		muestreoY=0;
+             	destinoY--;
+             	fin_pwmY=PWM_LOW+destinoY;
+           	}else if(y_outz2<(y_outz1-0.05)){
+				muestreoY=0;
+				destinoY++;
+				fin_pwmY=PWM_LOW+destinoY;
+           	}else{
+				muestreoY=0;
+				fin_pwmY=PWM_LOW+destinoY;
+	   		}
+		}
+	}else{
+  		muestreoY++;
+	}
 }
 
 
